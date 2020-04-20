@@ -162,7 +162,7 @@ setMethod("dbSendQuery", "clickhouse_connection", function(conn, statement, use 
 })
 
 setMethod("dbWriteTable", signature(conn = "clickhouse_connection", name = "character", value = "ANY"), definition = function(conn, name, value, overwrite=FALSE,
-  append=FALSE, engine="TinyLog", ...) {
+  append=FALSE, engine="TinyLog", quote=F,...) {
    if (is.vector(value) && !is.list(value)) value <- data.frame(x = value, stringsAsFactors = F)
   if (length(value) < 1) stop("value must have at least one column")
   if (is.null(names(value))) names(value) <- paste("V", 1:length(value), sep='')
@@ -202,7 +202,7 @@ setMethod("dbWriteTable", signature(conn = "clickhouse_connection", name = "char
     }
     # use local=TRUE in the textConnection call to ensure the calling environment does not
     # have a variable 'value_str' created
-    write.table(value, textConnection("value_str", open="w", local = TRUE), sep="\t", row.names=F, col.names=F)
+    write.table(value, textConnection("value_str", open="w", local = TRUE), sep="\t", row.names=F, col.names=F, quote=quote)
     value_str2 <- paste0(get("value_str"), collapse="\n")
 
 	h <- curl::new_handle()
@@ -221,6 +221,7 @@ setMethod("dbDataType", signature(dbObj="clickhouse_connection", obj = "ANY"), d
   if (is.logical(obj)) "UInt8"
   else if (is.integer(obj)) "Int32"
   else if (is.numeric(obj)) "Float64"
+  else if (class(obj) == "Date") "Date"
   else "String"
 }, valueClass = "character")
 
